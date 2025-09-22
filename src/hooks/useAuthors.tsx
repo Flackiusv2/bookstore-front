@@ -21,6 +21,13 @@ type AuthorsContextType = {
   createAuthor: (data: NewAuthor) => Promise<Author | null>;
   updateAuthor: (id: number, data: NewAuthor) => Promise<Author | null>;
   deleteAuthor: (id: number) => Promise<boolean>;
+  // Favoritos
+  favorites: Set<number>;
+  isFavorite: (id: number) => boolean;
+  addFavorite: (id: number) => void;
+  removeFavorite: (id: number) => void;
+  toggleFavorite: (id: number) => void;
+  favoriteAuthors: Author[];
 };
 
 const AuthorsContext = createContext<AuthorsContextType | undefined>(undefined);
@@ -31,6 +38,7 @@ export function AuthorsProvider({ children }: { children: React.ReactNode }) {
   const [authors, setAuthors] = useState<Author[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [favorites, setFavorites] = useState<Set<number>>(new Set());
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -51,6 +59,30 @@ export function AuthorsProvider({ children }: { children: React.ReactNode }) {
     // Cargar autores al montar
     refresh();
   }, [refresh]);
+
+  // Cargar favoritos desde localStorage al montar (solo cliente)
+  useEffect(() => {
+    try {
+      const raw = typeof window !== "undefined" ? window.localStorage.getItem("favorites:authors") : null;
+      if (raw) {
+        const parsed = JSON.parse(raw) as number[];
+        if (Array.isArray(parsed)) setFavorites(new Set(parsed));
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  // Persistir favoritos en localStorage
+  useEffect(() => {
+    try {
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("favorites:authors", JSON.stringify(Array.from(favorites)));
+      }
+    } catch {
+      // ignore
+    }
+  }, [favorites]);
 
   const getAuthorById = useCallback(
     (id: number) => authors.find((a) => a.id === id),
@@ -111,6 +143,13 @@ export function AuthorsProvider({ children }: { children: React.ReactNode }) {
       const res = await fetch(`${API_BASE}/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error(`Error ${res.status}`);
       setAuthors((prev) => prev.filter((a) => a.id !== id));
+      // Si se elimina un autor, quitarlo de favoritos
+      setFavorites((prev) => {
+        if (!prev.has(id)) return prev;
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
       return true;
     } catch (e) {
       console.error(e);
@@ -118,9 +157,70 @@ export function AuthorsProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // Helpers de favoritos
+  const isFavorite = useCallback((id: number) => favorites.has(id), [favorites]);
+  const addFavorite = useCallback((id: number) => {
+    setFavorites((prev) => {
+      if (prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+  }, []);
+  const removeFavorite = useCallback((id: number) => {
+    setFavorites((prev) => {
+      if (!prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+  }, []);
+  const toggleFavorite = useCallback((id: number) => {
+    setFavorites((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const favoriteAuthors = useMemo(
+    () => authors.filter((a) => favorites.has(a.id)),
+    [authors, favorites]
+  );
+
   const value = useMemo(
-    () => ({ authors, loading, error, refresh, getAuthorById, createAuthor, updateAuthor, deleteAuthor }),
-    [authors, loading, error, refresh, getAuthorById, createAuthor, updateAuthor, deleteAuthor]
+    () => ({
+      authors,
+      loading,
+      error,
+      refresh,
+      getAuthorById,
+      createAuthor,
+      updateAuthor,
+      deleteAuthor,
+      favorites,
+      isFavorite,
+      addFavorite,
+      removeFavorite,
+      toggleFavorite,
+      favoriteAuthors,
+    }),
+    [
+      authors,
+      loading,
+      error,
+      refresh,
+      getAuthorById,
+      createAuthor,
+      updateAuthor,
+      deleteAuthor,
+      favorites,
+      isFavorite,
+      addFavorite,
+      removeFavorite,
+      toggleFavorite,
+      favoriteAuthors,
+    ]
   );
 
   return <AuthorsContext.Provider value={value}>{children}</AuthorsContext.Provider>;
