@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import AuthorForm from '../AuthorForm';
 
 describe('AuthorForm', () => {
+  // Primera prueba para comprobar el render el formulario
   test('renderiza campos requeridos: name, description, birthDate, image', async () => {
     render(<AuthorForm onSubmit={jest.fn()} submitLabel="Crear" />);
 
@@ -28,7 +29,7 @@ describe('AuthorForm', () => {
     expect(birthDateInput).toBeEnabled();
     expect(imageInput).toBeEnabled();
   });
-
+  // Segunda prueba validar envio
   test('no permite enviar con campos requeridos vacíos y deshabilita el botón', async () => {
     const user = userEvent.setup();
     const onSubmit = jest.fn();
@@ -51,7 +52,7 @@ describe('AuthorForm', () => {
     await user.type(nameInput, 'Gabriel García Márquez');
     expect(submitButton).toBeDisabled();
 
-    // Completar el otro requerido -> botón habilitado
+    // Completar el ultimo requerido, se deberia esperar que el boton se habilite
     await user.type(birthDateInput, '1927-03-06');
     expect(submitButton).toBeEnabled();
 
