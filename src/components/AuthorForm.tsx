@@ -39,16 +39,23 @@ export default function AuthorForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const isValid = form.name.trim().length > 0 && form.birthDate.trim().length > 0;
+    if (!isValid) {
+      return;
+    }
     await onSubmit(form);
   }
+
+  const isSubmitDisabled = !form.name.trim() || !form.birthDate.trim();
 
   return (
     <form onSubmit={handleSubmit} className="grid gap-4">
       <div className="grid gap-1.5">
-        <label className="text-sm font-medium">Nombre</label>
+        <label htmlFor="name" className="text-sm font-medium">Nombre</label>
         <input
           type="text"
           name="name"
+          id="name"
           value={form.name}
           onChange={handleChange}
           required
@@ -57,9 +64,10 @@ export default function AuthorForm({
       </div>
 
       <div className="grid gap-1.5">
-        <label className="text-sm font-medium">Descripción</label>
+        <label htmlFor="description" className="text-sm font-medium">Descripción</label>
         <textarea
           name="description"
+          id="description"
           value={form.description}
           onChange={handleChange}
           rows={4}
@@ -68,10 +76,11 @@ export default function AuthorForm({
       </div>
 
       <div className="grid gap-1.5">
-        <label className="text-sm font-medium">Fecha de nacimiento</label>
+        <label htmlFor="birthDate" className="text-sm font-medium">Fecha de nacimiento</label>
         <input
           type="date"
           name="birthDate"
+          id="birthDate"
           value={form.birthDate}
           onChange={handleChange}
           required
@@ -80,10 +89,11 @@ export default function AuthorForm({
       </div>
 
       <div className="grid gap-1.5">
-        <label className="text-sm font-medium">URL de imagen</label>
+        <label htmlFor="image" className="text-sm font-medium">URL de imagen</label>
         <input
           type="url"
           name="image"
+          id="image"
           value={form.image}
           onChange={handleChange}
           className="w-full rounded-md border border-black/15 dark:border-white/15 bg-white dark:bg-zinc-800 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
@@ -92,7 +102,8 @@ export default function AuthorForm({
 
       <button
         type="submit"
-        className="mt-2 inline-flex items-center justify-center px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
+        disabled={isSubmitDisabled}
+        className="mt-2 inline-flex items-center justify-center px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {submitLabel}
       </button>
