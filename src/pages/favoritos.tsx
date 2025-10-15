@@ -20,7 +20,11 @@ export default function FavoritosPage() {
       </div>
 
       {loading && <p>Cargando...</p>}
-      {error && <p className="text-red-600">{error}</p>}
+      {error && (
+        <div className="bg-red-100 dark:bg-red-900/20 border border-red-400 text-red-700 dark:text-red-300 px-4 py-3 rounded mb-4">
+          {error}
+        </div>
+      )}
 
       {!loading && favoriteAuthors.length === 0 && (
         <p>No has marcado autores como favoritos todavía.</p>
@@ -38,7 +42,9 @@ export default function FavoritosPage() {
             isFavorite={isFavorite(a.id)}
             onToggleFavorite={toggleFavorite}
             onDelete={(id) => {
-              if (confirm("¿Eliminar autor?")) deleteAuthor(id);
+              if (confirm("¿Eliminar autor?")) {
+                deleteAuthor(id);
+              }
             }}
           />
         ))}
